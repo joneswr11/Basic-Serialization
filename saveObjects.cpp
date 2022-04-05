@@ -5,8 +5,6 @@
 #include "utils.h"
 
 const std::string objSaveFile = "obj.sav";
-const std::string structSaveFile = "struct.sav";
-const std::string allSaveData = "all.sav";
 
 struct basicStruct
 {
