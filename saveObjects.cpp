@@ -145,11 +145,9 @@ private:
 void saveAll(BasicOBJ& basicObj, basicStructObj& structObj)
 {
 	std::ofstream outputFile;
-	std::string data = basicObj.saveObj();
+	std::string data = basicObj.saveObj() + structObj.saveStruct();;
 
-	outputFile.open("all.temp", std::ios::out | std::ios::app);
-	outputFile.write(data.c_str(), data.size());
-	data = structObj.saveStruct();
+	outputFile.open("all.temp", std::ios::out | std::ios::binary);
 	outputFile.write(data.c_str(), data.size());
 	outputFile.close();
 	if (outputFile)
