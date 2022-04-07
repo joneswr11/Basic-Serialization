@@ -1,4 +1,3 @@
-// Helpful: https://www.geeksforgeeks.org/readwrite-class-objects-fromto-file-c/ 
 #include <iostream>
 #include <fstream>
 #include <sstream>
