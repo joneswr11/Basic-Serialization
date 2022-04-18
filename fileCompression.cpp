@@ -48,7 +48,7 @@ bool compressAndSaveData(std::string filename, std::string data)
 	outputFile.close();
 
 
-	if (outputFile)
+	if (!outputFile.fail())
 	{
 		remove(filename.c_str());
 		rename(tempFilename.c_str(), filename.c_str());
