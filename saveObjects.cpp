@@ -1,9 +1,42 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include "fileCompression.h"
 #include "utils.h"
 
+//#define HEX 1
+
+#ifdef HEX
+const std::string allSaveData = "all_hex.sav";
+#else
 const std::string allSaveData = "all.sav";
+#endif
+
+void toHex(std::string &str)
+{
+	std::ostringstream os;
+	for (const auto c : str)
+	{
+		if(int(c)<16)
+			os<<"0";
+		os << std::hex << int(c);
+	}
+	
+	str = os.str();
+}
+
+void toASCII(std::string &str)
+{
+	std::string ascii = "";
+	for(int x=0;x<str.length(); x+=2)
+	{
+		std::string part = str.substr(x,2);
+		// convert to base 16
+		char c = std::stoul(part,nullptr,16);
+		ascii += c;
+	}
+	str = ascii;
+}
 
 class basicStructObj
 {
@@ -23,7 +56,7 @@ public:
 		out += "someBoolVal=" + std::to_string(someBoolVal) + '\0';
 		out += "}";
 		out += '\0';
-
+		
 		return out;
 	}
 
@@ -103,7 +136,7 @@ public:
 
 		out += "}";
 		out += '\0';
-
+		
 		return out;
 	};
 	void loadObj(std::vector<std::string>& resultVector, int& count)
@@ -143,46 +176,32 @@ private:
 
 void saveAll(BasicOBJ& basicObj, basicStructObj& structObj)
 {
-	std::ofstream outputFile;
-	std::string data = basicObj.saveObj() + structObj.saveStruct();;
-
-	outputFile.open("all.temp", std::ios::out | std::ios::binary);
-	outputFile.write(data.c_str(), data.size());
-	outputFile.close();
-	if (outputFile)
-	{
-		remove(allSaveData.c_str());
-		rename("all.temp", allSaveData.c_str());
-	}
-	else
-	{
-		std::cout << "Error: Write failed\n";
-		remove("all.temp");
-	}
+	std::string data = basicObj.saveObj() + structObj.saveStruct();
+	#ifdef HEX
+	toHex(data);
+	#endif
+	compressAndSaveData(allSaveData, data);
 }
 
 bool loadAll(BasicOBJ& basicObj, basicStructObj& structObj)
 {
-	std::ifstream inputFile(allSaveData);
-	if (inputFile.fail())
+	std::string data = loadCompressedData(allSaveData);
+	if(data == "")
 		return false;
-	else
+	#ifdef HEX
+	toASCII(data);
+	#endif
+	std::vector<std::string> resultVector = parseString(data, '\0');
+	for (int x = 0; x < resultVector.size(); x++)
 	{
-		// store all contents of the file in the string data
-		std::string data((std::istreambuf_iterator<char>(inputFile)), (std::istreambuf_iterator<char>()));
-		std::vector<std::string> resultVector = parseString(data, '\0');
-		for (int x = 0; x < resultVector.size(); x++)
-		{
-			std::string pair = resultVector[x];
-			std::string param = biteString(pair, '=');
-			std::string val = pair;
-			if (param == "BasicOBJ{")
-				basicObj.loadObj(resultVector, x);
-			else if (param == "basicStructObj{")
-				structObj.loadStruct(resultVector, x);
-		}
+		std::string pair = resultVector[x];
+		std::string param = biteString(pair, '=');
+		std::string val = pair;
+		if (param == "BasicOBJ{")
+			basicObj.loadObj(resultVector, x);
+		else if (param == "basicStructObj{")
+			structObj.loadStruct(resultVector, x);
 	}
-	inputFile.close();
 	return true;
 }
 
